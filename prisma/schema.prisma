@@ -7,4 +7,18 @@ datasource db {
   provider = "postgresql"
 }
 
-// Models will be added here
+enum Role {
+  SUPER_ADMIN
+  STOCK
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STOCK)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
