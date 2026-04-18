@@ -1,11 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
-  const customers = await prisma.customer.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-  return NextResponse.json({ customers });
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = request.nextUrl;
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 10));
+    const search = searchParams.get("search")?.trim() || "";
+
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { phone: { contains: search } },
+            { area: { contains: search, mode: "insensitive" as const } },
+          ],
+        }
+      : {};
+
+    const [customers, total] = await Promise.all([
+      prisma.customer.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { user: { select: { name: true } } },
+      }),
+      prisma.customer.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      customers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { error: "Failed to fetch customers", detail: message },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
