@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Dealers", href: "/dealers" },
   { label: "Products", href: "/products" },
   { label: "Orders", href: "/orders" },
   { label: "Inventory", href: "/inventory" },
@@ -13,8 +13,14 @@ const navItems = [
   { label: "Settings", href: "/settings" },
 ];
 
+const customerSubItems = [
+  { label: "Customer List", href: "/customers/list" },
+  { label: "Create Customer", href: "/customers/create" },
+];
+
 export default function Sidebar() {
   const router = useRouter();
+  const [customersOpen, setCustomersOpen] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -34,6 +40,26 @@ export default function Sidebar() {
             {item.label}
           </Link>
         ))}
+        <button
+          onClick={() => setCustomersOpen(!customersOpen)}
+          className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm text-left cursor-pointer flex items-center justify-between"
+        >
+          Customers
+          <span className="text-xs">{customersOpen ? "▲" : "▼"}</span>
+        </button>
+        {customersOpen && (
+          <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
+            {customerSubItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
       </nav>
       <button
         onClick={handleLogout}
