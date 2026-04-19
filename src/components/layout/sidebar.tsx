@@ -20,6 +20,12 @@ const orderSubItems = [
   { label: "Payments", href: "/orders/payments" },
 ];
 
+const damageSubItems = [
+  { label: "Damage List", href: "/damages" },
+  { label: "Create Damage", href: "/damages/create" },
+  { label: "Damage Stock", href: "/damages/stock" },
+];
+
 const customerSubItems = [
   { label: "Customer List", href: "/customers/list" },
   { label: "Create Customer", href: "/customers/create" },
@@ -30,11 +36,13 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [productsOpen, setProductsOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
+  const [damagesOpen, setDamagesOpen] = useState(false);
   const [customersOpen, setCustomersOpen] = useState(false);
 
   useEffect(() => {
     if (pathname.startsWith("/products")) setProductsOpen(true);
     if (pathname.startsWith("/orders")) setOrdersOpen(true);
+    if (pathname.startsWith("/damages")) setDamagesOpen(true);
     if (pathname.startsWith("/customers")) setCustomersOpen(true);
   }, [pathname]);
 
@@ -49,6 +57,20 @@ export default function Sidebar() {
         ? "bg-blue-50 text-blue-700 font-medium"
         : "hover:bg-gray-100"
     }`;
+  }
+
+  function sectionClass(href: string) {
+    return `px-3 py-2 rounded-md text-sm text-left cursor-pointer flex items-center justify-between ${
+      isActive(href) ? "bg-blue-50 font-medium" : "hover:bg-gray-100"
+    }`;
+  }
+
+  function subItems(items: { label: string; href: string }[]) {
+    return items.map((item) => (
+      <Link key={item.href} href={item.href} className={linkClass(item.href)}>
+        {item.label}
+      </Link>
+    ));
   }
 
   async function handleLogout() {
@@ -69,20 +91,14 @@ export default function Sidebar() {
         {/* Products */}
         <button
           onClick={() => setProductsOpen(!productsOpen)}
-          className={`px-3 py-2 rounded-md text-sm text-left cursor-pointer flex items-center justify-between ${
-            isActive("/products") ? "bg-blue-50 font-medium" : "hover:bg-gray-100"
-          }`}
+          className={sectionClass("/products")}
         >
           Products
           <span className="text-xs">{productsOpen ? "▲" : "▼"}</span>
         </button>
         {productsOpen && (
           <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
-            {productSubItems.map((item) => (
-              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
-                {item.label}
-              </Link>
-            ))}
+            {subItems(productSubItems)}
           </div>
         )}
 
@@ -94,40 +110,42 @@ export default function Sidebar() {
         {/* Orders */}
         <button
           onClick={() => setOrdersOpen(!ordersOpen)}
-          className={`px-3 py-2 rounded-md text-sm text-left cursor-pointer flex items-center justify-between ${
-            isActive("/orders") ? "bg-blue-50 font-medium" : "hover:bg-gray-100"
-          }`}
+          className={sectionClass("/orders")}
         >
           Orders
           <span className="text-xs">{ordersOpen ? "▲" : "▼"}</span>
         </button>
         {ordersOpen && (
           <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
-            {orderSubItems.map((item) => (
-              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
-                {item.label}
-              </Link>
-            ))}
+            {subItems(orderSubItems)}
+          </div>
+        )}
+
+        {/* Damage */}
+        <button
+          onClick={() => setDamagesOpen(!damagesOpen)}
+          className={sectionClass("/damages")}
+        >
+          Damage
+          <span className="text-xs">{damagesOpen ? "▲" : "▼"}</span>
+        </button>
+        {damagesOpen && (
+          <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
+            {subItems(damageSubItems)}
           </div>
         )}
 
         {/* Customers */}
         <button
           onClick={() => setCustomersOpen(!customersOpen)}
-          className={`px-3 py-2 rounded-md text-sm text-left cursor-pointer flex items-center justify-between ${
-            isActive("/customers") ? "bg-blue-50 font-medium" : "hover:bg-gray-100"
-          }`}
+          className={sectionClass("/customers")}
         >
           Customers
           <span className="text-xs">{customersOpen ? "▲" : "▼"}</span>
         </button>
         {customersOpen && (
           <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
-            {customerSubItems.map((item) => (
-              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
-                {item.label}
-              </Link>
-            ))}
+            {subItems(customerSubItems)}
           </div>
         )}
 
