@@ -1,30 +1,34 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface ProductForm {
   name: string;
   sku: string;
   description: string;
-
   brand: string;
   tags: string;
   actualPrice: string;
   sellingPrice: string;
   trackInventory: boolean;
   minimumStockLevel: string;
+  stock: string;
   unit: "PCS" | "KG" | "LITER";
 }
 
-export default function CreateProductPage() {
+export default function EditProductPage() {
   const router = useRouter();
+  const params = useParams();
+  const [loading, setLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ProductForm>({
     defaultValues: {
@@ -35,9 +39,34 @@ export default function CreateProductPage() {
 
   const trackInventory = watch("trackInventory");
 
+  useEffect(() => {
+    fetch(`/api/products/${params.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.product) {
+          const p = data.product;
+          reset({
+            name: p.name,
+            sku: p.sku || "",
+            description: p.description || "",
+            brand: p.brand || "",
+            tags: p.tags || "",
+            actualPrice: String(p.actualPrice),
+            sellingPrice: String(p.sellingPrice),
+            trackInventory: p.trackInventory,
+            minimumStockLevel: p.minimumStockLevel != null ? String(p.minimumStockLevel) : "",
+            stock: String(p.stock),
+            unit: p.unit,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [params.id, reset]);
+
   async function onSubmit(data: ProductForm) {
-    const res = await fetch("/api/products", {
-      method: "POST",
+    const res = await fetch(`/api/products/${params.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -45,14 +74,16 @@ export default function CreateProductPage() {
     if (res.ok) {
       router.push("/products");
     } else {
-      const { error } = await res.json();
-      alert(error || "Failed to create product");
+      const err = await res.json();
+      alert(err.detail || err.error || "Failed to update product");
     }
   }
 
+  if (loading) return <div className="p-6 text-gray-400">Loading...</div>;
+
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-6">Create Product</h1>
+      <h1 className="text-2xl font-semibold mb-6">Edit Product</h1>
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="max-w-lg space-y-4 bg-white p-6 rounded-lg border border-gray-200"
@@ -145,6 +176,15 @@ export default function CreateProductPage() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium mb-1">Stock</label>
+          <input
+            type="number"
+            {...register("stock")}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium mb-1">Unit</label>
           <select
             {...register("unit")}
@@ -188,13 +228,22 @@ export default function CreateProductPage() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-        >
-          {isSubmitting ? "Creating..." : "Create Product"}
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+          >
+            {isSubmitting ? "Saving..." : "Update Product"}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/products")}
+            className="px-4 py-2 rounded-md text-sm border border-gray-300 hover:bg-gray-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );

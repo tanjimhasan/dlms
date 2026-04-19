@@ -6,10 +6,16 @@ import { useState } from "react";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Orders", href: "/orders" },
   { label: "Inventory", href: "/inventory" },
   { label: "Reports", href: "/reports" },
   { label: "Settings", href: "/settings" },
+];
+
+const orderSubItems = [
+  { label: "Order List", href: "/orders" },
+  { label: "Pending Approvals", href: "/orders/pending" },
+  { label: "Shipments", href: "/orders/shipments" },
+  { label: "Payments", href: "/orders/payments" },
 ];
 
 const productSubItems = [
@@ -26,6 +32,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [customersOpen, setCustomersOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -45,6 +52,26 @@ export default function Sidebar() {
             {item.label}
           </Link>
         ))}
+        <button
+          onClick={() => setOrdersOpen(!ordersOpen)}
+          className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm text-left cursor-pointer flex items-center justify-between"
+        >
+          Orders
+          <span className="text-xs">{ordersOpen ? "▲" : "▼"}</span>
+        </button>
+        {ordersOpen && (
+          <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
+            {orderSubItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
         <button
           onClick={() => setProductsOpen(!productsOpen)}
           className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm text-left cursor-pointer flex items-center justify-between"
