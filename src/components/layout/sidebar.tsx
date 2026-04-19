@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Inventory", href: "/inventory" },
-  { label: "Reports", href: "/reports" },
-  { label: "Settings", href: "/settings" },
+];
+
+const productSubItems = [
+  { label: "Product List", href: "/products" },
+  { label: "Create Product", href: "/products/create" },
 ];
 
 const orderSubItems = [
@@ -18,11 +20,6 @@ const orderSubItems = [
   { label: "Payments", href: "/orders/payments" },
 ];
 
-const productSubItems = [
-  { label: "Product List", href: "/products" },
-  { label: "Create Product", href: "/products/create" },
-];
-
 const customerSubItems = [
   { label: "Customer List", href: "/customers/list" },
   { label: "Create Customer", href: "/customers/create" },
@@ -30,9 +27,29 @@ const customerSubItems = [
 
 export default function Sidebar() {
   const router = useRouter();
-  const [customersOpen, setCustomersOpen] = useState(false);
+  const pathname = usePathname();
   const [productsOpen, setProductsOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
+  const [customersOpen, setCustomersOpen] = useState(false);
+
+  useEffect(() => {
+    if (pathname.startsWith("/products")) setProductsOpen(true);
+    if (pathname.startsWith("/orders")) setOrdersOpen(true);
+    if (pathname.startsWith("/customers")) setCustomersOpen(true);
+  }, [pathname]);
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
+
+  function linkClass(href: string) {
+    return `px-3 py-2 rounded-md text-sm ${
+      isActive(href)
+        ? "bg-blue-50 text-blue-700 font-medium"
+        : "hover:bg-gray-100"
+    }`;
+  }
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -44,37 +61,17 @@ export default function Sidebar() {
       <h1 className="text-xl font-bold mb-6">DLMS</h1>
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
-          >
+          <Link key={item.href} href={item.href} className={linkClass(item.href)}>
             {item.label}
           </Link>
         ))}
-        <button
-          onClick={() => setOrdersOpen(!ordersOpen)}
-          className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm text-left cursor-pointer flex items-center justify-between"
-        >
-          Orders
-          <span className="text-xs">{ordersOpen ? "▲" : "▼"}</span>
-        </button>
-        {ordersOpen && (
-          <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
-            {orderSubItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        )}
+
+        {/* Products */}
         <button
           onClick={() => setProductsOpen(!productsOpen)}
-          className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm text-left cursor-pointer flex items-center justify-between"
+          className={`px-3 py-2 rounded-md text-sm text-left cursor-pointer flex items-center justify-between ${
+            isActive("/products") ? "bg-blue-50 font-medium" : "hover:bg-gray-100"
+          }`}
         >
           Products
           <span className="text-xs">{productsOpen ? "▲" : "▼"}</span>
@@ -82,19 +79,44 @@ export default function Sidebar() {
         {productsOpen && (
           <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
             {productSubItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
-              >
+              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
                 {item.label}
               </Link>
             ))}
           </div>
         )}
+
+        {/* Inventory */}
+        <Link href="/inventory" className={linkClass("/inventory")}>
+          Inventory
+        </Link>
+
+        {/* Orders */}
+        <button
+          onClick={() => setOrdersOpen(!ordersOpen)}
+          className={`px-3 py-2 rounded-md text-sm text-left cursor-pointer flex items-center justify-between ${
+            isActive("/orders") ? "bg-blue-50 font-medium" : "hover:bg-gray-100"
+          }`}
+        >
+          Orders
+          <span className="text-xs">{ordersOpen ? "▲" : "▼"}</span>
+        </button>
+        {ordersOpen && (
+          <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
+            {orderSubItems.map((item) => (
+              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Customers */}
         <button
           onClick={() => setCustomersOpen(!customersOpen)}
-          className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm text-left cursor-pointer flex items-center justify-between"
+          className={`px-3 py-2 rounded-md text-sm text-left cursor-pointer flex items-center justify-between ${
+            isActive("/customers") ? "bg-blue-50 font-medium" : "hover:bg-gray-100"
+          }`}
         >
           Customers
           <span className="text-xs">{customersOpen ? "▲" : "▼"}</span>
@@ -102,16 +124,19 @@ export default function Sidebar() {
         {customersOpen && (
           <div className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-3">
             {customerSubItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
-              >
+              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
                 {item.label}
               </Link>
             ))}
           </div>
         )}
+
+        <Link href="/reports" className={linkClass("/reports")}>
+          Reports
+        </Link>
+        <Link href="/settings" className={linkClass("/settings")}>
+          Settings
+        </Link>
       </nav>
       <button
         onClick={handleLogout}
