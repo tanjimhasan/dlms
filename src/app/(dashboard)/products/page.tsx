@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { taka } from "@/lib/format";
 
 interface Product {
   id: string;
@@ -101,8 +102,8 @@ export default function ProductsPage() {
                     <td className="px-4 py-3 text-gray-500">{p.sku || "-"}</td>
                     <td className="px-4 py-3">{p.category?.name || "-"}</td>
                     <td className="px-4 py-3">{p.brand || "-"}</td>
-                    <td className="px-4 py-3">{Number(p.actualPrice).toLocaleString()}</td>
-                    <td className="px-4 py-3">{Number(p.sellingPrice).toLocaleString()}</td>
+                    <td className="px-4 py-3">{taka(Number(p.actualPrice))}</td>
+                    <td className="px-4 py-3">{taka(Number(p.sellingPrice))}</td>
                     <td className="px-4 py-3">
                       {p.trackInventory ? (
                         <span className={p.stock <= 0 ? "text-red-600 font-medium" : ""}>

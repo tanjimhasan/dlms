@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { taka } from "@/lib/format";
 
 interface Customer {
   id: string;
@@ -152,7 +153,7 @@ export default function CustomerListPage() {
                         />
                       </button>
                     </td>
-                    <td className="px-4 py-3">{Number(c.totalDue).toLocaleString()}</td>
+                    <td className="px-4 py-3">{taka(Number(c.totalDue))}</td>
                     <td className="px-4 py-3">{c.user.name}</td>
                     <td className="px-4 py-3">
                       {new Date(c.createdAt).toLocaleDateString()}

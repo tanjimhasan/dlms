@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { taka } from "@/lib/format";
 
 interface Order {
   id: string;
@@ -97,7 +98,7 @@ export default function PendingOrdersPage() {
                     </td>
                     <td className="px-4 py-3">{o.customer.name}</td>
                     <td className="px-4 py-3">{o._count.items}</td>
-                    <td className="px-4 py-3">{Number(o.totalAmount).toLocaleString()}</td>
+                    <td className="px-4 py-3">{taka(Number(o.totalAmount))}</td>
                     <td className="px-4 py-3">{o.createdByUser.name}</td>
                     <td className="px-4 py-3">{new Date(o.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3">

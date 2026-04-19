@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { taka } from "@/lib/format";
 
 interface Order {
   id: string;
@@ -75,7 +76,7 @@ export default function PaymentsPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3">{o.customer.name}</td>
-                    <td className="px-4 py-3">{Number(o.payment.amount).toLocaleString()}</td>
+                    <td className="px-4 py-3">{taka(Number(o.payment.amount))}</td>
                     <td className="px-4 py-3">{o.payment.method.replace("_", " ")}</td>
                     <td className="px-4 py-3">{o.payment.reference || "-"}</td>
                     <td className="px-4 py-3">{o.payment.receivedByUser.name}</td>

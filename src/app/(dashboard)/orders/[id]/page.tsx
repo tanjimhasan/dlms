@@ -172,9 +172,9 @@ export default function OrderDetailPage() {
             {order.items.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">{item.productName}</td>
-                <td className="px-4 py-3">{Number(item.unitPrice).toLocaleString()}</td>
+                <td className="px-4 py-3">{taka(Number(item.unitPrice))}</td>
                 <td className="px-4 py-3">{item.quantity}</td>
-                <td className="px-4 py-3 text-right">{Number(item.totalPrice).toLocaleString()}</td>
+                <td className="px-4 py-3 text-right">{taka(Number(item.totalPrice))}</td>
               </tr>
             ))}
           </tbody>
@@ -184,7 +184,7 @@ export default function OrderDetailPage() {
                 Grand Total
               </td>
               <td className="px-4 py-3 text-right font-semibold">
-                {Number(order.totalAmount).toLocaleString()}
+                {taka(Number(order.totalAmount))}
               </td>
             </tr>
           </tfoot>
@@ -226,7 +226,7 @@ export default function OrderDetailPage() {
           <div className="grid grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Amount</p>
-              <p className="font-medium">{Number(order.payment.amount).toLocaleString()}</p>
+              <p className="font-medium">{taka(Number(order.payment.amount))}</p>
             </div>
             <div>
               <p className="text-gray-500">Method</p>
@@ -325,7 +325,7 @@ export default function OrderDetailPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Amount</label>
                   <input
-                    value={Number(order.totalAmount).toLocaleString()}
+                    value={taka(Number(order.totalAmount))}
                     disabled
                     className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-gray-50"
                   />
