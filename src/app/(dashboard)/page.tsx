@@ -19,6 +19,8 @@ interface DashboardData {
     saleStock: number;
     damageStock: number;
   };
+  totalCustomerDue: number;
+  totalDue: number;
 }
 
 export default function DashboardPage() {
@@ -38,10 +40,10 @@ export default function DashboardPage() {
   }
 
   const balanceCards = [
-    { label: "Cash Balance", value: data?.balance.cash ?? 0, color: "bg-green-50 text-green-700" },
-    { label: "Bank Balance", value: data?.balance.bank ?? 0, color: "bg-blue-50 text-blue-700" },
-    { label: "Mobile Banking", value: data?.balance.mobile ?? 0, color: "bg-purple-50 text-purple-700" },
-    { label: "Total Balance", value: data?.balance.total ?? 0, color: "bg-amber-50 text-amber-700" },
+    { label: "Cash Balance", value: data?.balance?.cash ?? 0, color: "bg-green-50 text-green-700" },
+    { label: "Bank Balance", value: data?.balance?.bank ?? 0, color: "bg-blue-50 text-blue-700" },
+    { label: "Mobile Banking", value: data?.balance?.mobile ?? 0, color: "bg-purple-50 text-purple-700" },
+    { label: "Total Balance", value: data?.balance?.total ?? 0, color: "bg-amber-50 text-amber-700" },
   ];
 
   const summaryCards = [
@@ -50,10 +52,15 @@ export default function DashboardPage() {
     { label: "Pending Orders", value: data?.pendingOrders ?? 0 },
   ];
 
+  const dueCards = [
+    { label: "Customer Due", value: data?.totalCustomerDue ?? 0 },
+    { label: "Total Due", value: data?.totalDue ?? 0 },
+  ];
+
   const stockCards = [
-    { label: "Available Stock", value: data?.stock.availableStock ?? 0 },
-    { label: "Sale Stock", value: data?.stock.saleStock ?? 0 },
-    { label: "Damage Stock", value: data?.stock.damageStock ?? 0 },
+    { label: "Available Stock", value: data?.stock?.availableStock ?? 0 },
+    { label: "Sale Stock", value: data?.stock?.saleStock ?? 0 },
+    { label: "Damage Stock", value: data?.stock?.damageStock ?? 0 },
   ];
 
   return (
@@ -89,8 +96,21 @@ export default function DashboardPage() {
       </div>
 
       {/* Stock Value Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         {stockCards.map((card) => (
+          <div
+            key={card.label}
+            className="bg-white rounded-lg border border-gray-200 p-5"
+          >
+            <p className="text-sm text-gray-500">{card.label}</p>
+            <p className="text-2xl font-bold mt-1">{taka(card.value)}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Due Cards */}
+      <div className="grid grid-cols-2 gap-4">
+        {dueCards.map((card) => (
           <div
             key={card.label}
             className="bg-white rounded-lg border border-gray-200 p-5"

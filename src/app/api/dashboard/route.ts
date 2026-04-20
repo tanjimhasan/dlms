@@ -12,6 +12,8 @@ export async function GET() {
       stockIns,
       orderItems,
       damages,
+      customerDue,
+      unpaidOrders,
     ] = await Promise.all([
       prisma.customer.count({ where: { status: "ACTIVE" } }),
       prisma.product.count(),
@@ -24,6 +26,11 @@ export async function GET() {
       prisma.orderItem.aggregate({ _sum: { totalPrice: true } }),
       prisma.damage.findMany({
         select: { quantity: true, product: { select: { actualPrice: true } } },
+      }),
+      prisma.customer.aggregate({ _sum: { totalDue: true } }),
+      prisma.order.aggregate({
+        where: { status: { in: ["PENDING", "APPROVED", "SHIPPED", "DELIVERED"] } },
+        _sum: { totalAmount: true },
       }),
     ]);
 
@@ -61,6 +68,8 @@ export async function GET() {
       pendingOrders,
       balance: { cash, bank, mobile, total: cash + bank + mobile },
       stock: { availableStock, purchasedStock, saleStock, damageStock },
+      totalCustomerDue: Number(customerDue._sum.totalDue ?? 0),
+      totalDue: Number(unpaidOrders._sum.totalAmount ?? 0),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
