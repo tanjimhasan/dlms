@@ -3,15 +3,29 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const [totalCustomers, totalProducts, pendingOrders, payments] =
-      await Promise.all([
-        prisma.customer.count({ where: { status: "ACTIVE" } }),
-        prisma.product.count(),
-        prisma.order.count({ where: { status: "PENDING" } }),
-        prisma.payment.findMany({
-          select: { amount: true, method: true },
-        }),
-      ]);
+    const [
+      totalCustomers,
+      totalProducts,
+      pendingOrders,
+      payments,
+      products,
+      stockIns,
+      orderItems,
+      damages,
+    ] = await Promise.all([
+      prisma.customer.count({ where: { status: "ACTIVE" } }),
+      prisma.product.count(),
+      prisma.order.count({ where: { status: "PENDING" } }),
+      prisma.payment.findMany({ select: { amount: true, method: true } }),
+      prisma.product.findMany({ select: { stock: true, actualPrice: true } }),
+      prisma.stockIn.findMany({
+        select: { quantity: true, product: { select: { actualPrice: true } } },
+      }),
+      prisma.orderItem.aggregate({ _sum: { totalPrice: true } }),
+      prisma.damage.findMany({
+        select: { quantity: true, product: { select: { actualPrice: true } } },
+      }),
+    ]);
 
     let cash = 0;
     let bank = 0;
@@ -24,16 +38,29 @@ export async function GET() {
       else if (p.method === "MOBILE_BANKING") mobile += amount;
     }
 
+    const availableStock = products.reduce(
+      (sum, p) => sum + p.stock * Number(p.actualPrice),
+      0
+    );
+
+    const purchasedStock = stockIns.reduce(
+      (sum, s) => sum + s.quantity * Number(s.product.actualPrice),
+      0
+    );
+
+    const saleStock = Number(orderItems._sum.totalPrice ?? 0);
+
+    const damageStock = damages.reduce(
+      (sum, d) => sum + d.quantity * Number(d.product.actualPrice),
+      0
+    );
+
     return NextResponse.json({
       totalCustomers,
       totalProducts,
       pendingOrders,
-      balance: {
-        cash,
-        bank,
-        mobile,
-        total: cash + bank + mobile,
-      },
+      balance: { cash, bank, mobile, total: cash + bank + mobile },
+      stock: { availableStock, purchasedStock, saleStock, damageStock },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";

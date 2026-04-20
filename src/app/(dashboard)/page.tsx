@@ -13,6 +13,12 @@ interface DashboardData {
     mobile: number;
     total: number;
   };
+  stock: {
+    availableStock: number;
+    purchasedStock: number;
+    saleStock: number;
+    damageStock: number;
+  };
 }
 
 export default function DashboardPage() {
@@ -44,6 +50,12 @@ export default function DashboardPage() {
     { label: "Pending Orders", value: data?.pendingOrders ?? 0 },
   ];
 
+  const stockCards = [
+    { label: "Available Stock", value: data?.stock.availableStock ?? 0 },
+    { label: "Sale Stock", value: data?.stock.saleStock ?? 0 },
+    { label: "Damage Stock", value: data?.stock.damageStock ?? 0 },
+  ];
+
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
@@ -64,7 +76,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         {summaryCards.map((card) => (
           <div
             key={card.label}
@@ -72,6 +84,19 @@ export default function DashboardPage() {
           >
             <p className="text-sm text-gray-500">{card.label}</p>
             <p className="text-2xl font-bold mt-1">{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Stock Value Cards */}
+      <div className="grid grid-cols-3 gap-4">
+        {stockCards.map((card) => (
+          <div
+            key={card.label}
+            className="bg-white rounded-lg border border-gray-200 p-5"
+          >
+            <p className="text-sm text-gray-500">{card.label}</p>
+            <p className="text-2xl font-bold mt-1">{taka(card.value)}</p>
           </div>
         ))}
       </div>
