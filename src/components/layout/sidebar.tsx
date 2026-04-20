@@ -27,7 +27,7 @@ const damageSubItems = [
 ];
 
 const customerSubItems = [
-  { label: "Customer List", href: "/customers/list" },
+  { label: "Customer List", href: "/customers" },
   { label: "Create Customer", href: "/customers/create" },
 ];
 
