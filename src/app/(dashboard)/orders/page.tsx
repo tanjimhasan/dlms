@@ -9,10 +9,14 @@ interface Order {
   orderNumber: string;
   status: string;
   totalAmount: string;
+  dueAmount: string;
   createdAt: string;
   customer: { name: string; phone: string };
   createdByUser: { name: string };
   _count: { items: number };
+  payment: {
+    amount: string;
+  } | null;
 }
 
 interface Pagination {
@@ -29,6 +33,7 @@ const statusColors: Record<string, string> = {
   SHIPPED: "bg-purple-100 text-purple-800",
   DELIVERED: "bg-green-100 text-green-800",
   PAID: "bg-gray-100 text-gray-800",
+  PAID_PARTIAL: "bg-indigo-100 text-indigo-800",
 };
 
 export default function OrderListPage() {
@@ -124,6 +129,7 @@ export default function OrderListPage() {
                 <th className="px-4 py-3 font-medium">Customer</th>
                 <th className="px-4 py-3 font-medium">Items</th>
                 <th className="px-4 py-3 font-medium">Total</th>
+                <th className="px-4 py-3 font-medium">Due</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Created By</th>
                 <th className="px-4 py-3 font-medium">Date</th>
@@ -150,6 +156,7 @@ export default function OrderListPage() {
                     <td className="px-4 py-3">{o.customer.name}</td>
                     <td className="px-4 py-3">{o._count.items}</td>
                     <td className="px-4 py-3">{taka(Number(o.totalAmount))}</td>
+                    <td className="px-4 py-3">{taka(Number(o.totalAmount) - Number(o.payment?.amount || 0))}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${

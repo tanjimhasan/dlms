@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-type OrderAction = "approve" | "reject" | "ship" | "deliver" | "pay";
+type OrderAction = "approve" | "reject" | "ship" | "deliver" | "pay" | "pay_partial";
 
 const validTransitions: Record<string, OrderAction[]> = {
   PENDING: ["approve", "reject"],
   APPROVED: ["ship"],
   SHIPPED: ["deliver"],
-  DELIVERED: ["pay"],
+  DELIVERED: ["pay", "pay_partial"],
+  PAID_PARTIAL: ["pay", "pay_partial"],
 };
 
 function canTransition(currentStatus: string, action: OrderAction): boolean {
@@ -28,7 +29,10 @@ export async function GET(
         reviewedByUser: { select: { name: true } },
         items: true,
         shipment: { include: { shippedByUser: { select: { name: true } } } },
-        payment: { include: { receivedByUser: { select: { name: true } } } },
+        payment: {
+          orderBy: { receivedAt: 'desc' },
+          include: { receivedByUser: { select: { name: true } } },
+        },
       },
     });
 
@@ -36,7 +40,19 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ order });
+    const totalPaid = order.payment.reduce(
+      (sum, payment) => sum + Number(payment.amount),
+      0
+    );
+
+    const formattedOrder = {
+      ...order,
+      payment: order.payment[0] ?? null,
+      totalPaid,
+      dueAmount: Math.max(Number(order.totalAmount) - totalPaid, 0),
+    };
+
+    return NextResponse.json({ order: formattedOrder });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
@@ -62,8 +78,8 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { action, rejectionReason, deliveryNotes, paymentMethod, paymentReference, paymentNotes } = body;
-
+    const { action, rejectionReason, deliveryNotes, paymentMethod, paidAmount, paymentReference, paymentNotes } = body;
+    
     const order = await prisma.order.findUnique({
       where: { id },
       include: { items: true, customer: true },
@@ -152,27 +168,63 @@ export async function PATCH(
           { status: 400 }
         );
       }
+
+      const normalizedPaidAmount = Number(paidAmount);
+      if (!Number.isFinite(normalizedPaidAmount) || normalizedPaidAmount <= 0) {
+        return NextResponse.json(
+          { error: "A valid payment amount is required" },
+          { status: 400 }
+        );
+      }
+
       updated = await prisma.$transaction(async (tx) => {
-        const payment = await tx.payment.create({
+        const totals = await tx.payment.aggregate({
+          where: { orderId: id },
+          _sum: { amount: true },
+        });
+
+        const totalPaidBefore = Number(totals._sum.amount ?? 0);
+        const orderTotal = Number(order.totalAmount);
+        const remainingDue = Math.max(orderTotal - totalPaidBefore, 0);
+
+        if (remainingDue <= 0) {
+          throw new Error("This order has already been fully paid");
+        }
+
+        if (normalizedPaidAmount > remainingDue) {
+          throw new Error(`Payment exceeds remaining due of ${remainingDue}`);
+        }
+
+        await tx.payment.create({
           data: {
             orderId: id,
-            amount: order.totalAmount,
+            amount: normalizedPaidAmount,
             method: paymentMethod,
             reference: paymentReference || null,
             receivedBy: userId,
             notes: paymentNotes || null,
           },
         });
-        const currentDue = Number(order.customer.totalDue);
-        const orderTotal = Number(order.totalAmount);
-        const newTotalDue = currentDue - orderTotal;
-        await tx.customer.update({
+
+        const totalPaidAfter = totalPaidBefore + normalizedPaidAmount;
+        const nextStatus = totalPaidAfter >= orderTotal ? "PAID" : "PAID_PARTIAL";
+        const customer = await tx.customer.findUnique({
           where: { id: order.customerId },
-          data: { totalDue: newTotalDue < 0 ? 0 : newTotalDue },
+          select: { totalDue: true },
         });
+
+        if (customer) {
+          await tx.customer.update({
+            where: { id: order.customerId },
+            data: {
+              totalDue: Math.max(Number(customer.totalDue) - normalizedPaidAmount, 0),
+            },
+          });
+        }
+
         return tx.order.update({
           where: { id },
-          data: { status: "PAID" },
+          data: { status: nextStatus },
         });
       });
     } else {
@@ -183,6 +235,12 @@ export async function PATCH(
   } catch (error: unknown) {
     console.error("Update order error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
+    if (
+      message === "This order has already been fully paid" ||
+      message.startsWith("Payment exceeds remaining due of")
+    ) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     return NextResponse.json(
       { error: "Failed to update order", detail: message },
       { status: 500 }

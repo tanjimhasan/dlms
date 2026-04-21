@@ -17,6 +17,8 @@ interface Order {
   orderNumber: string;
   status: string;
   totalAmount: string;
+  totalPaid: number;
+  dueAmount: number;
   notes: string | null;
   rejectionReason: string | null;
   createdAt: string;
@@ -48,6 +50,7 @@ const statusColors: Record<string, string> = {
   SHIPPED: "bg-purple-100 text-purple-800",
   DELIVERED: "bg-green-100 text-green-800",
   PAID: "bg-gray-100 text-gray-800",
+  PAID_PARTIAL: "bg-orange-100 text-orange-800",
 };
 
 export default function OrderDetailPage() {
@@ -59,20 +62,31 @@ export default function OrderDetailPage() {
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  
+  // Existing payment states
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
+  
+  const [paymentType, setPaymentType] = useState("FULL");
+  const [partialAmount, setPartialAmount] = useState("");
+
+  async function loadOrder() {
+    const res = await fetch(`/api/orders/${params.id}`);
+    const data = await res.json();
+    setOrder(data.order);
+  }
 
   useEffect(() => {
-    fetch(`/api/orders/${params.id}`)
-      .then((res) => res.json())
-      .then((data) => setOrder(data.order))
-      .catch(() => {})
+    loadOrder()
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [params.id]);
 
-  async function handleAction(action: string, extra: Record<string, string> = {}) {
+  // Because we are now passing `paidAmount` as a number, not a string.
+  async function handleAction(action: string, extra: Record<string, any> = {}) {
     setActionLoading(true);
+    
     try {
       const res = await fetch(`/api/orders/${params.id}`, {
         method: "PATCH",
@@ -80,10 +94,12 @@ export default function OrderDetailPage() {
         body: JSON.stringify({ action, ...extra }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setOrder({ ...order, ...data.order });
+        await loadOrder();
         setShowRejectForm(false);
         setShowPaymentForm(false);
+        // Optional: Reset partial payment states after success
+        setPaymentType("FULL");
+        setPartialAmount("");
       } else {
         const { error } = await res.json();
         alert(error || "Action failed");
@@ -96,6 +112,9 @@ export default function OrderDetailPage() {
 
   if (loading) return <div className="p-6 text-gray-400">Loading...</div>;
   if (!order) return <div className="p-6 text-gray-400">Order not found.</div>;
+
+  const dueAmount = Number(order.dueAmount ?? Number(order.totalAmount));
+  const totalPaid = Number(order.totalPaid ?? Number(order.payment?.amount || 0));
 
   return (
     <div className="max-w-4xl">
@@ -115,9 +134,8 @@ export default function OrderDetailPage() {
             </p>
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              statusColors[order.status] || "bg-gray-100"
-            }`}
+            className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status] || "bg-gray-100"
+              }`}
           >
             {order.status}
           </span>
@@ -136,6 +154,21 @@ export default function OrderDetailPage() {
           <div>
             <p className="text-gray-500">Area</p>
             <p className="font-medium">{order.customer.area}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 text-sm mt-4 md:grid-cols-4">
+          <div>
+            <p className="text-gray-500">Grand Total</p>
+            <p className="font-medium">{taka(Number(order.totalAmount))}</p>
+          </div>
+          <div>
+            <p className="text-gray-500">Paid</p>
+            <p className="font-medium">{taka(totalPaid)}</p>
+          </div>
+          <div>
+            <p className="text-gray-500">Due</p>
+            <p className="font-medium">{taka(dueAmount)}</p>
           </div>
         </div>
 
@@ -310,7 +343,7 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {order.status === "DELIVERED" && (
+      {(order.status === "DELIVERED" || order.status === "PAID_PARTIAL") && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           {!showPaymentForm ? (
             <button
@@ -321,15 +354,28 @@ export default function OrderDetailPage() {
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Amount</label>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <select
+                    value={paymentType}
+                    onChange={(e) => setPaymentType(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  >
+                    <option value="FULL">Full Payment</option>
+                    <option value="PAID_PARTIAL">Partial Payment</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Remaining Due</label>
                   <input
-                    value={taka(Number(order.totalAmount))}
+                    value={taka(dueAmount)}
                     disabled
                     className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-gray-50"
                   />
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Method</label>
                   <select
@@ -343,6 +389,7 @@ export default function OrderDetailPage() {
                     <option value="MOBILE_BANKING">Mobile Banking</option>
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Reference</label>
                   <input
@@ -352,6 +399,22 @@ export default function OrderDetailPage() {
                   />
                 </div>
               </div>
+
+              {paymentType === "PAID_PARTIAL" && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Amount to Pay</label>
+                  <input
+                    type="number"
+                    value={partialAmount}
+                    onChange={(e) => setPartialAmount(e.target.value)}
+                    placeholder="Enter partial amount..."
+                    min="1"
+                    max={dueAmount}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
+
               <textarea
                 value={paymentNotes}
                 onChange={(e) => setPaymentNotes(e.target.value)}
@@ -359,16 +422,26 @@ export default function OrderDetailPage() {
                 rows={2}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
               />
+
               <div className="flex gap-2">
                 <button
                   onClick={() =>
                     handleAction("pay", {
+                      paymentType,
+                      paidAmount: paymentType === "FULL"
+                        ? dueAmount
+                        : Number(partialAmount),
                       paymentMethod,
                       paymentReference,
                       paymentNotes,
                     })
                   }
-                  disabled={actionLoading}
+                  disabled={
+                    actionLoading ||
+                    dueAmount <= 0 ||
+                    (paymentType === "PAID_PARTIAL" &&
+                      (!partialAmount || Number(partialAmount) <= 0 || Number(partialAmount) > dueAmount))
+                  }
                   className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
                 >
                   {actionLoading ? "Processing..." : "Confirm Payment"}

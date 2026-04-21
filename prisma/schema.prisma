@@ -95,6 +95,7 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   PAID
+  PAID_PARTIAL
 }
 
 enum PaymentMethod {
@@ -122,7 +123,7 @@ model Order {
   reviewedByUser User?        @relation("ReviewedOrders", fields: [reviewedBy], references: [id])
   items          OrderItem[]
   shipment       Shipment?
-  payment        Payment?
+  payment        Payment[]
 }
 
 model OrderItem {
@@ -153,7 +154,7 @@ model Shipment {
 
 model Payment {
   id          String       @id @default(uuid())
-  orderId     String       @unique
+  orderId     String
   amount      Decimal      @db.Decimal(12, 2)
   method      PaymentMethod
   reference   String?
