@@ -27,7 +27,15 @@ export async function GET() {
       prisma.damage.findMany({
         select: { quantity: true, product: { select: { actualPrice: true } } },
       }),
-      prisma.customer.aggregate({ _sum: { totalDue: true } }),
+      prisma.$queryRaw<[{ due: bigint }]>`
+        SELECT COALESCE(
+          (SELECT COALESCE(SUM("totalAmount"), 0) FROM "Order" WHERE status != 'REJECTED') -
+          (SELECT COALESCE(SUM(p.amount), 0) FROM "Payment" p 
+           JOIN "Order" o ON p."orderId" = o.id 
+           WHERE o.status != 'REJECTED'),
+          0
+        ) as due
+      `,
       prisma.order.aggregate({
         where: { status: { in: ["PENDING", "APPROVED", "SHIPPED", "DELIVERED"] } },
         _sum: { totalAmount: true },
@@ -68,7 +76,7 @@ export async function GET() {
       pendingOrders,
       balance: { cash, bank, mobile, total: cash + bank + mobile },
       stock: { availableStock, purchasedStock, saleStock, damageStock },
-      totalCustomerDue: Number(customerDue._sum.totalDue ?? 0),
+      totalCustomerDue: Number(customerDue[0]?.due),
       totalDue: Number(unpaidOrders._sum.totalAmount ?? 0),
     });
   } catch (error: unknown) {

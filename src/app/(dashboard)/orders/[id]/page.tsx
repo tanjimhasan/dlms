@@ -255,28 +255,62 @@ export default function OrderDetailPage() {
       {/* Payment Info */}
       {order.payment && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
-          <h2 className="font-semibold mb-3">Payment Details</h2>
-          <div className="grid grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-gray-500">Amount</p>
-              <p className="font-medium">{taka(Number(order.payment.amount))}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Method</p>
-              <p className="font-medium">{order.payment.method.replace("_", " ")}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Received By</p>
-              <p className="font-medium">{order.payment.receivedByUser.name}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Date</p>
-              <p className="font-medium">{new Date(order.payment.receivedAt).toLocaleString()}</p>
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Payment History</h3>
+
+            <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Method
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Received By
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {order.payments.length > 0 ? (
+                    order.payments.map((payment) => (
+                      <tr key={payment.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                          {new Date(payment.receivedAt).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {/* Using a badge style for the method makes it easier to scan */}
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {payment.method.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                          {payment.receivedByUser?.name || "Unknown User"}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right font-medium text-gray-900">
+                          {taka(Number(payment.amount))}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-4 text-center text-gray-500">
+                        No payments recorded yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-          {order.payment.reference && (
+          {/* {order.payment.reference && (
             <p className="mt-2 text-sm text-gray-600">Ref: {order.payment.reference}</p>
-          )}
+          )} */}
         </div>
       )}
 

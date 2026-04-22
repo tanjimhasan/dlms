@@ -47,7 +47,7 @@ export async function GET(
 
     const formattedOrder = {
       ...order,
-      payment: order.payment[0] ?? null,
+      payments: order.payment ?? null,
       totalPaid,
       dueAmount: Math.max(Number(order.totalAmount) - totalPaid, 0),
     };
