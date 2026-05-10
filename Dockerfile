@@ -42,7 +42,9 @@ RUN npm install prisma@7 dotenv tsx --omit=dev
 
 RUN chown -R nextjs:nodejs /app
 
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node server.js"]
+
 USER nextjs
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node server.js"]
+
