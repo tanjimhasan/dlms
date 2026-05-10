@@ -29,7 +29,7 @@ export async function GET(
         reviewedByUser: { select: { name: true } },
         items: true,
         shipment: { include: { shippedByUser: { select: { name: true } } } },
-        payment: {
+        payments: {
           orderBy: { receivedAt: 'desc' },
           include: { receivedByUser: { select: { name: true } } },
         },
@@ -40,14 +40,13 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const totalPaid = order.payment.reduce(
+    const totalPaid = order.payments.reduce(
       (sum, payment) => sum + Number(payment.amount),
       0
     );
 
     const formattedOrder = {
       ...order,
-      payments: order.payment ?? null,
       totalPaid,
       dueAmount: Math.max(Number(order.totalAmount) - totalPaid, 0),
     };

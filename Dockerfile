@@ -15,9 +15,9 @@ COPY . .
 # ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
 # Generate Prisma client - no database connection needed
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://postgres:3MB78k5Av2WHpvvJJ5MZ@project-databases-postgres-ntvdrv:5432/dealership_management" npx prisma generate
 
-RUN npm run build
+RUN DATABASE_URL="postgresql://postgres:3MB78k5Av2WHpvvJJ5MZ@project-databases-postgres-ntvdrv:5432/dealership_management" npm run build
 
 FROM base AS runner
 WORKDIR /app
@@ -32,9 +32,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-
-# Only copy these if they exist
-COPY --from=builder /app/src/generated ./src/generated || true
+COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma

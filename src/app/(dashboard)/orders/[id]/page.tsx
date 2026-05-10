@@ -33,14 +33,15 @@ interface Order {
     deliveryNotes: string | null;
     shippedByUser: { name: string };
   } | null;
-  payment: {
+  payments: {
+    id: string;
     amount: string;
     method: string;
     reference: string | null;
     receivedAt: string;
     notes: string | null;
     receivedByUser: { name: string };
-  } | null;
+  }[];
 }
 
 const statusColors: Record<string, string> = {
@@ -114,7 +115,7 @@ export default function OrderDetailPage() {
   if (!order) return <div className="p-6 text-gray-400">Order not found.</div>;
 
   const dueAmount = Number(order.dueAmount ?? Number(order.totalAmount));
-  const totalPaid = Number(order.totalPaid ?? Number(order.payment?.amount || 0));
+  const totalPaid = Number(order.totalPaid ?? 0);
 
   return (
     <div className="max-w-4xl">
@@ -253,7 +254,7 @@ export default function OrderDetailPage() {
       )}
 
       {/* Payment Info */}
-      {order.payment && (
+      {order.payments.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
           <div className="mt-4">
             <h3 className="text-sm font-semibold text-gray-900 mb-2">Payment History</h3>
@@ -277,33 +278,25 @@ export default function OrderDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {order.payments.length > 0 ? (
-                    order.payments.map((payment) => (
-                      <tr key={payment.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-600">
-                          {new Date(payment.receivedAt).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          {/* Using a badge style for the method makes it easier to scan */}
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {payment.method.replace(/_/g, " ")}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-600">
-                          {payment.receivedByUser?.name || "Unknown User"}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right font-medium text-gray-900">
-                          {taka(Number(payment.amount))}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-4 text-center text-gray-500">
-                        No payments recorded yet.
+                  {order.payments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                        {new Date(payment.receivedAt).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {/* Using a badge style for the method makes it easier to scan */}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {payment.method.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                        {payment.receivedByUser?.name || "Unknown User"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right font-medium text-gray-900">
+                        {taka(Number(payment.amount))}
                       </td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
