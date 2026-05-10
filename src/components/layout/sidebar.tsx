@@ -38,6 +38,14 @@ export default function Sidebar() {
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [damagesOpen, setDamagesOpen] = useState(false);
   const [customersOpen, setCustomersOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => data.user && setUserRole(data.user.role))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (pathname.startsWith("/products")) setProductsOpen(true);
@@ -152,9 +160,11 @@ export default function Sidebar() {
         <Link href="/reports" className={linkClass("/reports")}>
           Reports
         </Link>
-        <Link href="/settings" className={linkClass("/settings")}>
-          Settings
-        </Link>
+        {userRole === "SUPER_ADMIN" && (
+          <Link href="/settings" className={linkClass("/settings")}>
+            Settings
+          </Link>
+        )}
       </nav>
       <button
         onClick={handleLogout}
