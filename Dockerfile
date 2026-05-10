@@ -12,7 +12,8 @@ COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 # Temporarily move config and add url to schema for build
 RUN mv prisma.config.ts prisma.config.ts.bak && \
-    sed -i 's/provider = "postgresql"/provider = "postgresql"\n  url      = env("DATABASE_URL")/' prisma/schema.prisma && \
+    awk '/provider = "postgresql"/{print; print "  url      = env(\"DATABASE_URL\")"; next}1' prisma/schema.prisma > prisma/schema.prisma.tmp && \
+    mv prisma/schema.prisma.tmp prisma/schema.prisma && \
     npx prisma generate --schema=prisma/schema.prisma && \
     mv prisma.config.ts.bak prisma.config.ts
 RUN npm run build
