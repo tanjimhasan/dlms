@@ -15,27 +15,27 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3001
 ENV HOSTNAME="0.0.0.0"
 
-# Install openssl for Prisma
 RUN apk add --no-cache openssl
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy necessary files
+# Copy standalone output
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
 
-# Copy Prisma client
+# Copy prisma files and client for migrations
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 USER nextjs
 EXPOSE 3000
 
-# Run migrations then start
 CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
