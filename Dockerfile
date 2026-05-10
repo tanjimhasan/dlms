@@ -19,7 +19,7 @@ RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=4001
+ENV PORT=4000
 ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs
@@ -34,6 +34,6 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 USER nextjs
-EXPOSE 4001
+EXPOSE 4000
 
 CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
