@@ -10,7 +10,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate
+# Temporarily move config and add url to schema for build
+RUN mv prisma.config.ts prisma.config.ts.bak && \
+    sed -i 's/provider = "postgresql"/provider = "postgresql"\n  url      = env("DATABASE_URL")/' prisma/schema.prisma && \
+    npx prisma generate --schema=prisma/schema.prisma && \
+    mv prisma.config.ts.bak prisma.config.ts
 RUN npm run build
 
 FROM base AS runner
