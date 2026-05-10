@@ -14,9 +14,11 @@ interface Order {
   customer: { name: string; phone: string };
   createdByUser: { name: string };
   _count: { items: number };
-  payment: {
-    amount: string;
-  } | null;
+  payments: []
+}
+
+interface Payment {
+  amount: number;
 }
 
 interface Pagination {
@@ -83,6 +85,18 @@ export default function OrderListPage() {
 
   function goToPage(page: number) {
     fetchOrders(page, search, statusFilter);
+  }
+
+  function getTotalPayment(payments: Payment[]) {
+    let totalPayment: number = 0;
+    console.log('@chk', payments);
+
+    // 2. Add 'const' or 'let' before 'item'
+    for (const item of payments) {
+      totalPayment += Number(item.amount);
+    }
+
+    return totalPayment;
   }
 
   return (
@@ -156,7 +170,7 @@ export default function OrderListPage() {
                     <td className="px-4 py-3">{o.customer.name}</td>
                     <td className="px-4 py-3">{o._count.items}</td>
                     <td className="px-4 py-3">{taka(Number(o.totalAmount))}</td>
-                    <td className="px-4 py-3">{taka(Number(o.totalAmount) - Number(o.payment?.amount || 0))}</td>
+                    <td className="px-4 py-3">{taka(Number(o.totalAmount) - getTotalPayment(o.payments))}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${

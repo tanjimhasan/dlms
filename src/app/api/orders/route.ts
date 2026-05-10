@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
           createdByUser: { select: { name: true } },
           _count: { select: { items: true } },
           shipment: { include: { shippedByUser: { select: { name: true } } } },
-          payment: { include: { receivedByUser: { select: { name: true } } } },
+          payments: { include: { receivedByUser: { select: { name: true } } } },
         },
       }),
       prisma.order.count({ where }),
