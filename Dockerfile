@@ -15,7 +15,7 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=4001
 ENV HOSTNAME="0.0.0.0"
 
 RUN apk add --no-cache openssl
