@@ -37,7 +37,10 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated ./src/generated
 
 # Install prisma CLI + dotenv (needed for migrate deploy at runtime via prisma.config.ts)
-RUN npm install prisma@7 dotenv tsx @prisma/adapter-pg bcryptjs --omit=dev
+RUN npm install prisma@7 dotenv --omit=dev
+
+# Install seed dependencies in isolated directory (avoids conflicts with standalone node_modules)
+RUN mkdir -p /app/seed-deps && cd /app/seed-deps && npm init -y && npm install @prisma/adapter-pg bcryptjs tsx
 
 RUN chown -R nextjs:nodejs /app
 
