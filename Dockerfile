@@ -36,12 +36,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated ./src/generated
 
-# Install prisma CLI + dotenv + tsx (needed for migrate deploy + seed at runtime)
-RUN npm install prisma@7 dotenv tsx --omit=dev
+# Install prisma CLI + dotenv (needed for migrate deploy at runtime via prisma.config.ts)
+RUN npm install prisma@7 dotenv --omit=dev
 
 RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
