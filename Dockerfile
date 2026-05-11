@@ -37,7 +37,7 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated ./src/generated
 
 # Install prisma CLI + dotenv (needed for migrate deploy at runtime via prisma.config.ts)
-RUN npm install prisma@7 dotenv --omit=dev
+RUN npm install prisma@7 dotenv tsx --omit=dev
 
 RUN chown -R nextjs:nodejs /app
 
