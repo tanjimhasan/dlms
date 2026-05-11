@@ -8,6 +8,5 @@ export default defineConfig({
   },
   migrations: {
     path: "prisma/migrations",
-    seed: "npx tsx prisma/seed.ts",
   },
 });
